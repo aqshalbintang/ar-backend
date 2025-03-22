@@ -13,7 +13,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors({
-    origin: "*",
+    origin: "https://ar-frontend-git-main-aqshalbintangs-projects.vercel.app",
     methods: ["GET", "POST", "DELETE", "PUT"],
     allowedHeaders: ["Content-Type"],
 }));

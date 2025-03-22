@@ -265,6 +265,10 @@ app.get('/api/marker-count', async (req, res) => {
     }
 });
 
+app.get("/api/data", (req, res) => {
+    res.json({ message: "Success" });
+});
+
 app.listen(8080, () => {
     console.log("Server berjalan di http://localhost:8080");
 });

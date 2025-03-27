@@ -156,7 +156,7 @@ app.post("/login", async (req, res) => {
         return res.status(401).json({ message: "Password salah" });
     }
 
-    const token = jwt.sign({ username: user.username, role: user.role }, jwtSecret, { expiresIn: "1h" });
+    const token = jwt.sign({ username: user.username, role: user.role }, jwtSecret, { expiresIn: "30m" });
     res.json({ token });
 });
 
@@ -172,7 +172,7 @@ app.post("/api/visitors", async (req, res) => {
         const newVisitor = new Visitor({ name, email, birthDate, phone });
         await newVisitor.save();
 
-        const token = jwt.sign({ id: newVisitor._id, email: newVisitor.email }, SECRET_KEY, { expiresIn: "1h" });
+        const token = jwt.sign({ id: newVisitor._id, email: newVisitor.email }, SECRET_KEY, { expiresIn: "30m" });
 
         return res.status(201).json({ message: "Visitor berhasil ditambahkan.", visitor: newVisitor, token });
     } catch (error) {
@@ -193,7 +193,7 @@ app.post("/api/login", async (req, res) => {
             return res.status(404).json({ message: "Email tidak ditemukan" });
         }
 
-        const token = jwt.sign({ id: visitor._id, email: visitor.email }, SECRET_KEY, { expiresIn: "1h" });
+        const token = jwt.sign({ id: visitor._id, email: visitor.email }, SECRET_KEY, { expiresIn: "30m" });
 
         return res.status(200).json({ message: "Login berhasil", visitor, token });
     } catch (error) {

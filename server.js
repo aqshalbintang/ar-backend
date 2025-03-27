@@ -156,7 +156,7 @@ app.post("/login", async (req, res) => {
         return res.status(401).json({ message: "Password salah" });
     }
 
-    const token = jwt.sign({ username: user.username, role: user.role }, jwtSecret, { expiresIn: "3m" });
+    const token = jwt.sign({ username: user.username, role: user.role }, jwtSecret, { expiresIn: "30m" });
     res.json({ token });
 });
 
@@ -172,7 +172,7 @@ app.post("/api/visitors", async (req, res) => {
         const newVisitor = new Visitor({ name, email, birthDate, phone });
         await newVisitor.save();
 
-        const token = jwt.sign({ id: newVisitor._id, email: newVisitor.email }, SECRET_KEY, { expiresIn: "3m" });
+        const token = jwt.sign({ id: newVisitor._id, email: newVisitor.email }, SECRET_KEY, { expiresIn: "30m" });
 
         return res.status(201).json({ message: "Visitor berhasil ditambahkan.", visitor: newVisitor, token });
     } catch (error) {
@@ -193,13 +193,9 @@ app.post("/api/login", async (req, res) => {
             return res.status(404).json({ message: "Email tidak ditemukan" });
         }
 
-        const token = jwt.sign({ id: visitor._id, email: visitor.email }, SECRET_KEY,{ expiresIn: "3m" });
+        const token = jwt.sign({ id: visitor._id, email: visitor.email }, SECRET_KEY, { expiresIn: "30m" });
 
-        return res.status(200).json({
-            message: "Login berhasil",
-            visitor: { id: visitor._id, email: visitor.email },
-            token
-        });
+        return res.status(200).json({ message: "Login berhasil", visitor, token });
     } catch (error) {
         console.error("Error saat login:", error);
         return res.status(500).json({ message: "Terjadi kesalahan", error: error.message });
@@ -267,24 +263,17 @@ app.get('/api/marker-count', async (req, res) => {
 
 const verifyToken = (req, res, next) => {
     const authHeader = req.header("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ message: "Akses ditolak, token tidak ditemukan atau tidak valid" });
-    }
+    if (!authHeader) return res.status(401).json({ message: "Akses ditolak, token tidak ditemukan" });
 
     const token = authHeader.split(" ")[1];
-    if (!token) {
-        return res.status(401).json({ message: "Token tidak valid" });
-    }
+    if (!token) return res.status(401).json({ message: "Token tidak valid" });
 
     try {
         const verified = jwt.verify(token, SECRET_KEY);
         req.user = verified;
         next();
     } catch (err) {
-        if (err.name === "TokenExpiredError") {
-            return res.status(401).json({ message: "Token sudah kedaluwarsa, silakan login lagi" });
-        }
-        return res.status(401).json({ message: "Token tidak valid" });
+        res.status(400).json({ message: "Token tidak valid atau sudah kedaluwarsa" });
     }
 };
 
@@ -302,10 +291,6 @@ app.get("/api/user", verifyToken, async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
-
-app.get("/api/protected", verifyToken, (req, res) => {
-    res.json({ message: "Akses berhasil", user: req.user });
 });
 
 app.listen(8080, () => {

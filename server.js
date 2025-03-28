@@ -16,7 +16,7 @@ app.use(cors({}));
 app.use(express.urlencoded({ extended: true }));
 
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
-const SECRET_KEY_USER = process.env.SECRET_KEY;
+const SECRET_KEY = process.env.SECRET_KEY;
 
 mongoose.connect(process.env.MONGO_URI, {})
     .then(() => console.log("MongoDB Connected"))
@@ -172,7 +172,7 @@ app.post("/api/visitors", async (req, res) => {
         const newVisitor = new Visitor({ name, email, birthDate, phone });
         await newVisitor.save();
 
-        const token = jwt.sign({ id: newVisitor._id, email: newVisitor.email }, SECRET_KEY_USER, { expiresIn: "30m" });
+        const token = jwt.sign({ id: newVisitor._id, email: newVisitor.email }, SECRET_KEY, { expiresIn: "30m" });
 
         return res.status(201).json({ message: "Visitor berhasil ditambahkan.", visitor: newVisitor, token });
     } catch (error) {
@@ -193,7 +193,7 @@ app.post("/api/login", async (req, res) => {
             return res.status(404).json({ message: "Email tidak ditemukan" });
         }
 
-        const token = jwt.sign({ id: visitor._id, email: visitor.email }, SECRET_KEY_USER, { expiresIn: "30m" });
+        const token = jwt.sign({ id: visitor._id, email: visitor.email }, SECRET_KEY, { expiresIn: "30m" });
 
         return res.status(200).json({ message: "Login berhasil", visitor, token });
     } catch (error) {
@@ -263,29 +263,30 @@ app.get('/api/marker-count', async (req, res) => {
 
 const verifyToken = (req, res, next) => {
     const authHeader = req.header("Authorization");
-    if (!authHeader) return res.status(401).json({ message: "Akses ditolak, token tidak ditemukan" });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Akses ditolak, token tidak ditemukan atau format tidak valid" });
+    }
 
     const token = authHeader.split(" ")[1];
-    if (!token) return res.status(401).json({ message: "Token tidak valid" });
+    if (!token) {
+        return res.status(401).json({ message: "Token tidak valid" });
+    }
 
     try {
         let verified;
-
-        const decoded = jwt.decode(token);
-
-        if (!decoded || !decoded.role) {
-            return res.status(400).json({ message: "Token tidak valid" });
+        try {
+            verified = jwt.verify(token, jwtSecret);
+        } catch (err) {
+            verified = jwt.verify(token, SECRET_KEY);
         }
-
-        const secretKey = decoded.role === "admin" ? jwtSecret : SECRET_KEY_USER;
-        verified = jwt.verify(token, secretKey);
 
         req.user = verified;
         next();
     } catch (err) {
-        return res.status(400).json({ message: "Token tidak valid atau sudah kedaluwarsa" });
+        return res.status(403).json({ message: "Token tidak valid atau sudah kedaluwarsa" });
     }
 };
+
 
 app.get("/api/admin/dashboard", verifyToken, async (req, res) => {
     try {

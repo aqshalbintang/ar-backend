@@ -269,13 +269,42 @@ const verifyToken = (req, res, next) => {
     if (!token) return res.status(401).json({ message: "Token tidak valid" });
 
     try {
-        const verified = jwt.verify(token, SECRET_KEY);
-        req.user = verified;
+        let verified;
+
+        // Decode token dulu untuk melihat role (tanpa verifikasi)
+        const decoded = jwt.decode(token);
+
+        if (!decoded || !decoded.role) {
+            return res.status(400).json({ message: "Token tidak valid" });
+        }
+
+        // Gunakan jwtSecret untuk admin, dan SECRET_KEY_USER untuk user biasa
+        const secretKey = decoded.role === "admin" ? jwtSecret : SECRET_KEY_USER;
+        verified = jwt.verify(token, secretKey);
+
+        req.user = verified; // Simpan data user dari token ke request
         next();
     } catch (err) {
-        res.status(400).json({ message: "Token tidak valid atau sudah kedaluwarsa" });
+        return res.status(400).json({ message: "Token tidak valid atau sudah kedaluwarsa" });
     }
 };
+
+app.get("/api/admin/dashboard", verifyToken, async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.user.username });
+        if (!user) return res.status(404).json({ message: "Admin tidak ditemukan" });
+
+        res.json({
+            name: user.name,
+            email: user.email,
+            birthDate: user.birthDate,
+            phone: user.phone
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 app.get("/api/user", verifyToken, async (req, res) => {
     try {

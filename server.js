@@ -16,7 +16,7 @@ app.use(cors({}));
 app.use(express.urlencoded({ extended: true }));
 
 const jwtSecret = process.env.JWT_SECRET || "defaultSecret";
-const SECRET_KEY = process.env.SECRET_KEY;
+const SECRET_KEY_USER = process.env.SECRET_KEY;
 
 mongoose.connect(process.env.MONGO_URI, {})
     .then(() => console.log("MongoDB Connected"))
@@ -172,7 +172,7 @@ app.post("/api/visitors", async (req, res) => {
         const newVisitor = new Visitor({ name, email, birthDate, phone });
         await newVisitor.save();
 
-        const token = jwt.sign({ id: newVisitor._id, email: newVisitor.email }, SECRET_KEY, { expiresIn: "30m" });
+        const token = jwt.sign({ id: newVisitor._id, email: newVisitor.email }, SECRET_KEY_USER, { expiresIn: "30m" });
 
         return res.status(201).json({ message: "Visitor berhasil ditambahkan.", visitor: newVisitor, token });
     } catch (error) {
@@ -193,7 +193,7 @@ app.post("/api/login", async (req, res) => {
             return res.status(404).json({ message: "Email tidak ditemukan" });
         }
 
-        const token = jwt.sign({ id: visitor._id, email: visitor.email }, SECRET_KEY, { expiresIn: "30m" });
+        const token = jwt.sign({ id: visitor._id, email: visitor.email }, SECRET_KEY_USER, { expiresIn: "30m" });
 
         return res.status(200).json({ message: "Login berhasil", visitor, token });
     } catch (error) {
@@ -271,18 +271,16 @@ const verifyToken = (req, res, next) => {
     try {
         let verified;
 
-        // Decode token dulu untuk melihat role (tanpa verifikasi)
         const decoded = jwt.decode(token);
 
         if (!decoded || !decoded.role) {
             return res.status(400).json({ message: "Token tidak valid" });
         }
 
-        // Gunakan jwtSecret untuk admin, dan SECRET_KEY_USER untuk user biasa
-        const secretKey = decoded.role === "admin" ? jwtSecret : SECRET_KEY;
+        const secretKey = decoded.role === "admin" ? jwtSecret : SECRET_KEY_USER;
         verified = jwt.verify(token, secretKey);
 
-        req.user = verified; // Simpan data user dari token ke request
+        req.user = verified;
         next();
     } catch (err) {
         return res.status(400).json({ message: "Token tidak valid atau sudah kedaluwarsa" });

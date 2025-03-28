@@ -279,7 +279,7 @@ const verifyToken = (req, res, next) => {
         }
 
         // Gunakan jwtSecret untuk admin, dan SECRET_KEY_USER untuk user biasa
-        const secretKey = decoded.role === "admin" ? jwtSecret : SECRET_KEY_USER;
+        const secretKey = decoded.role === "admin" ? jwtSecret : SECRET_KEY;
         verified = jwt.verify(token, secretKey);
 
         req.user = verified; // Simpan data user dari token ke request

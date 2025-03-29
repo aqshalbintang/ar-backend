@@ -273,13 +273,7 @@ const verifyToken = (req, res, next) => {
     }
 
     try {
-        let verified;
-        try {
-            verified = jwt.verify(token, jwtSecret);
-        } catch (err) {
-            verified = jwt.verify(token, SECRET_KEY);
-        }
-
+        const verified = jwt.verify(token, jwtSecret);
         req.user = verified;
         
         if (req.user.role !== 'admin') {
@@ -291,7 +285,6 @@ const verifyToken = (req, res, next) => {
         return res.status(403).json({ message: "Token tidak valid atau sudah kedaluwarsa" });
     }
 };
-
 
 app.get("/api/admin/dashboard", verifyToken, async (req, res) => {
     try {

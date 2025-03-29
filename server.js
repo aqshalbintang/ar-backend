@@ -203,6 +203,32 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
+const verifyUserToken = (req, res, next) => {
+    const authHeader = req.header("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Akses ditolak, token tidak ditemukan atau format tidak valid" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+        return res.status(401).json({ message: "Token tidak valid" });
+    }
+
+    try {
+        // Verifikasi token dan ambil payload
+        const verified = jwt.verify(token, SECRET_KEY);
+        req.user = verified;
+
+        // Pastikan role adalah 'visitor'
+        if (req.user.role !== 'visitor') {
+            return res.status(403).json({ message: "Akses ditolak, hanya pengguna dengan role 'visitor' yang bisa mengakses" });
+        }
+
+        next();
+    } catch (err) {
+        return res.status(403).json({ message: "Token tidak valid atau sudah kedaluwarsa" });
+    }
+};
 
 app.get("/api/visitors", verifyUserToken,  async (req, res) => {
     try {
@@ -300,33 +326,6 @@ app.get("/api/admin/dashboard", verifyAdminToken, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
-const verifyUserToken = (req, res, next) => {
-    const authHeader = req.header("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ message: "Akses ditolak, token tidak ditemukan atau format tidak valid" });
-    }
-
-    const token = authHeader.split(" ")[1];
-    if (!token) {
-        return res.status(401).json({ message: "Token tidak valid" });
-    }
-
-    try {
-        // Verifikasi token dan ambil payload
-        const verified = jwt.verify(token, SECRET_KEY);
-        req.user = verified;
-
-        // Pastikan role adalah 'visitor'
-        if (req.user.role !== 'visitor') {
-            return res.status(403).json({ message: "Akses ditolak, hanya pengguna dengan role 'visitor' yang bisa mengakses" });
-        }
-
-        next();
-    } catch (err) {
-        return res.status(403).json({ message: "Token tidak valid atau sudah kedaluwarsa" });
-    }
-};
 
 
 app.get("/api/user", verifyUserToken, async (req, res) => {

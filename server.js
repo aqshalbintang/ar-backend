@@ -45,6 +45,7 @@ const visitorSchema = new mongoose.Schema({
     email: { type: String, unique: true, required: true },
     birthDate: { type: String, required: true },
     phone: { type: String, required: true },
+    role: String
 }, { timestamps: true });
 
 const Visitor = mongoose.model("Visitor", visitorSchema);
@@ -169,7 +170,7 @@ app.post("/api/visitors", async (req, res) => {
             return res.status(400).json({ message: "Email sudah terdaftar" });
         }
     
-        const newVisitor = new Visitor({ name, email, birthDate, phone });
+        const newVisitor = new Visitor({ name, email, birthDate, phone, role: 'visitor' });
         await newVisitor.save();
 
         const token = jwt.sign({ id: newVisitor._id, email: newVisitor.email }, SECRET_KEY, { expiresIn: "30m" });

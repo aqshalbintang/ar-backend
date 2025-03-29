@@ -215,11 +215,9 @@ const verifyUserToken = (req, res, next) => {
     }
 
     try {
-        // Verifikasi token dan ambil payload
         const verified = jwt.verify(token, SECRET_KEY);
         req.user = verified;
 
-        // Pastikan role adalah 'visitor'
         if (req.user.role !== 'visitor') {
             return res.status(403).json({ message: "Akses ditolak, hanya pengguna dengan role 'visitor' yang bisa mengakses" });
         }
@@ -230,7 +228,7 @@ const verifyUserToken = (req, res, next) => {
     }
 };
 
-app.get("/api/visitors", verifyUserToken,  async (req, res) => {
+app.get("/api/visitors", verifyUserToken, async (req, res) => {
     try {
         const visitors = await Visitor.find();
         res.json(visitors);

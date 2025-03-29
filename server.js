@@ -281,6 +281,11 @@ const verifyToken = (req, res, next) => {
         }
 
         req.user = verified;
+        
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ message: "Akses ditolak, hanya admin yang bisa mengakses" });
+        }
+        
         next();
     } catch (err) {
         return res.status(403).json({ message: "Token tidak valid atau sudah kedaluwarsa" });
@@ -294,10 +299,8 @@ app.get("/api/admin/dashboard", verifyToken, async (req, res) => {
         if (!user) return res.status(404).json({ message: "Admin tidak ditemukan" });
 
         res.json({
-            name: user.name,
-            email: user.email,
-            birthDate: user.birthDate,
-            phone: user.phone
+            username: user.username,
+            role: user.role
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

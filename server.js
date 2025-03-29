@@ -173,7 +173,7 @@ app.post("/api/visitors", async (req, res) => {
         const newVisitor = new Visitor({ name, email, birthDate, phone, role: 'visitor' });
         await newVisitor.save();
 
-        const token = jwt.sign({ id: newVisitor._id, email: newVisitor.email }, SECRET_KEY, { expiresIn: "30m" });
+        const token = jwt.sign({ id: newVisitor._id, email: newVisitor.email, role: 'visitor' }, SECRET_KEY, { expiresIn: "30m" });
 
         return res.status(201).json({ message: "Visitor berhasil ditambahkan.", visitor: newVisitor, token });
     } catch (error) {
@@ -194,7 +194,7 @@ app.post("/api/login", async (req, res) => {
             return res.status(404).json({ message: "Email tidak ditemukan" });
         }
 
-        const token = jwt.sign({ id: visitor._id, email: visitor.email }, SECRET_KEY, { expiresIn: "30m" });
+        const token = jwt.sign({ id: visitor._id, email: visitor.email, role: visitor.role }, SECRET_KEY, { expiresIn: "30m" });
 
         return res.status(200).json({ message: "Login berhasil", visitor, token });
     } catch (error) {

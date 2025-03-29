@@ -316,8 +316,8 @@ const verifyUserToken = (req, res, next) => {
         const verified = jwt.verify(token, SECRET_KEY);
         req.user = verified;
 
-        if (req.user.role !== 'user') {
-            return res.status(403).json({ message: "Akses ditolak, hanya pengguna yang bisa mengakses" });
+        if (visitor.role !== 'visitor') {
+            return res.status(403).json({ message: "Akses ditolak, hanya pengguna dengan role 'visitor' yang bisa mengakses" });
         }
 
         next();

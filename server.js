@@ -182,28 +182,6 @@ app.post("/api/visitors", async (req, res) => {
     }
 });
 
-app.post("/api/login", async (req, res) => {
-    try {
-        const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({ message: "Email harus diisi." });
-        }
-
-        const visitor = await Visitor.findOne({ email });
-        if (!visitor) {
-            return res.status(404).json({ message: "Email tidak ditemukan" });
-        }
-
-        const token = jwt.sign({ id: visitor._id, email: visitor.email, role: visitor.role || 'visitor' }, SECRET_KEY, { expiresIn: "30m" });
-
-        return res.status(200).json({ message: "Login berhasil", visitor, token });
-    } catch (error) {
-        console.error("Error saat login:", error);
-        return res.status(500).json({ message: "Terjadi kesalahan", error: error.message });
-    }
-});
-
-
 const verifyUserToken = (req, res, next) => {
     const authHeader = req.header("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -229,7 +207,28 @@ const verifyUserToken = (req, res, next) => {
     }
 };
 
-app.get("/api/visitors", verifyUserToken, async (req, res) => {
+app.post("/api/login", verifyUserToken, async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: "Email harus diisi." });
+        }
+
+        const visitor = await Visitor.findOne({ email });
+        if (!visitor) {
+            return res.status(404).json({ message: "Email tidak ditemukan" });
+        }
+
+        const token = jwt.sign({ id: visitor._id, email: visitor.email, role: visitor.role || 'visitor' }, SECRET_KEY, { expiresIn: "30m" });
+
+        return res.status(200).json({ message: "Login berhasil", visitor, token });
+    } catch (error) {
+        console.error("Error saat login:", error);
+        return res.status(500).json({ message: "Terjadi kesalahan", error: error.message });
+    }
+});
+
+app.get("/api/visitors", async (req, res) => {
     try {
         const visitors = await Visitor.find();
         res.json(visitors);

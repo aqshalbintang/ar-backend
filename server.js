@@ -261,7 +261,7 @@ app.get('/api/marker-count', async (req, res) => {
     }
 });
 
-const verifyToken = (req, res, next) => {
+const verifyAdminToken = (req, res, next) => {
     const authHeader = req.header("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res.status(401).json({ message: "Akses ditolak, token tidak ditemukan atau format tidak valid" });
@@ -286,7 +286,7 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-app.get("/api/admin/dashboard", verifyToken, async (req, res) => {
+app.get("/api/admin/dashboard", verifyAdminToken, async (req, res) => {
     try {
         const user = await User.findOne({ username: req.user.username });
         if (!user) return res.status(404).json({ message: "Admin tidak ditemukan" });
@@ -300,8 +300,33 @@ app.get("/api/admin/dashboard", verifyToken, async (req, res) => {
     }
 });
 
+const verifyUserToken = (req, res, next) => {
+    const authHeader = req.header("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Akses ditolak, token tidak ditemukan atau format tidak valid" });
+    }
 
-app.get("/api/user", verifyToken, async (req, res) => {
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+        return res.status(401).json({ message: "Token tidak valid" });
+    }
+
+    try {
+        const verified = jwt.verify(token, SECRET_KEY);
+        req.user = verified;
+
+        if (req.user.role !== 'user') {
+            return res.status(403).json({ message: "Akses ditolak, hanya pengguna yang bisa mengakses" });
+        }
+
+        next();
+    } catch (err) {
+        return res.status(403).json({ message: "Token tidak valid atau sudah kedaluwarsa" });
+    }
+};
+
+
+app.get("/api/user", verifyUserToken, async (req, res) => {
     try {
         const visitor = await Visitor.findOne({ email: req.user.email });
         if (!visitor) return res.status(404).json({ message: "Visitor tidak ditemukan" });

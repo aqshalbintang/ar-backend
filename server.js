@@ -343,6 +343,26 @@ app.get("/api/user", verifyUserToken, async (req, res) => {
     }
 });
 
+app.get('/api/chartvisitor', async (req, res) => {
+  try {
+    const result = await Visitor.aggregate([
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m", date: "$createdAt" }
+          },
+          total: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(8080, () => {
     console.log("Server berjalan di http://localhost:8080");
 });
